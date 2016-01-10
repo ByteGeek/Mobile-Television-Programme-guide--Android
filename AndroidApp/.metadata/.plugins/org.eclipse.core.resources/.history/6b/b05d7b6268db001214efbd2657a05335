@@ -1,0 +1,249 @@
+package com.msk.epg;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.ContentValues;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.util.Log;
+import android.widget.Toast;
+
+public class Utility 
+{
+
+	private static String language = null;
+
+	public static class DBWrapper 
+	{
+		private DBHelper helper;
+
+		public DBWrapper(Context ctx) 
+		{
+			// TODO Auto-generated constructor stub
+			helper = new DBHelper(ctx);
+		}
+
+		public long addFavorite(String pid,String pname,String cname, String pdate, String pdetails, String pstime, String petime) 
+		{
+			SQLiteDatabase db = helper.getWritableDatabase();
+
+			ContentValues values = new ContentValues();
+			values.put(DBHelper.PROG_ID, pid);
+			values.put(DBHelper.PROG_NAME, pname);
+			values.put(DBHelper.CHANNEL_NAME, cname);
+			values.put(DBHelper.PROG_DATE, pdate);
+			values.put(DBHelper.PROG_DETAILS, pdetails);
+			values.put(DBHelper.PROG_STIME, pstime);
+			values.put(DBHelper.PROG_ETIME, petime);
+
+			long rowid = db.insert(DBHelper.TABLE_NAME, null, values);
+
+			db.close();
+			return rowid;
+		}
+
+		public Cursor getFavorite() 
+		{
+			SQLiteDatabase db = helper.getReadableDatabase();
+
+			String[] clmns = { DBHelper.PROG_ID, DBHelper.PROG_NAME, DBHelper.CHANNEL_NAME, DBHelper.PROG_DATE,
+					DBHelper.PROG_DETAILS,DBHelper.PROG_STIME, DBHelper.PROG_ETIME };
+
+			Cursor c = db.query(DBHelper.TABLE_NAME, clmns, null, null, null,
+					null, null);
+
+			return c;
+		}
+		public Cursor getIds()
+		{
+			SQLiteDatabase db = helper.getReadableDatabase();
+
+			String[] clmns = { DBHelper.PROG_ID};
+
+			Cursor c = db.query(DBHelper.TABLE_NAME, clmns, null, null, null,
+					null, null);
+			return c;
+		}
+		
+		public int deleteFavorite(String selectedID) 
+		{
+			SQLiteDatabase db = helper.getWritableDatabase();
+
+			int rows = db
+					.delete(DBHelper.TABLE_NAME, "prog_id=" + selectedID, null);
+
+			return rows;
+		}
+
+	}
+
+
+	public static Dialog favoriteOnly(final Context context, final Show selectedShow)
+	{
+		// TODO Auto-generated method stub
+		Log.e("abcdefgh", "fav inside Utility");
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		builder.setTitle("Select Option");
+		String[] options = { "Add favorite", "Cancel" };
+
+		builder.setSingleChoiceItems(options, -1, new DialogInterface.OnClickListener() 
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which) 
+			{
+				// TODO Auto-generated method stub
+				switch (which) 
+				{
+					case 0: Utility.DBWrapper wrapper = new Utility.DBWrapper(context);
+							if (!alreadyFavorite(context, selectedShow.getpid())) 
+							{
+								long id = wrapper.addFavorite(selectedShow.getpid(), selectedShow.getpname(),selectedShow.getcname(),selectedShow.getpdate(),selectedShow.getpdetails(),selectedShow.getpstime(),selectedShow.getpetime());
+								if (id != -1) 
+								{
+									Toast.makeText(context,"Favorite added successfully",Toast.LENGTH_LONG).show();
+								}
+								else
+								Toast.makeText(context,"Error adding Favorite",Toast.LENGTH_LONG).show();
+							} 
+							else
+							Toast.makeText(context,"Already this show is added as favorite",Toast.LENGTH_LONG).show();
+							dialog.cancel();
+							break;
+					case 1: dialog.cancel();
+							break;
+				}
+			}
+		});
+		return builder.create();
+	}
+	
+	public static Dialog createShowDialog(final Context context, final Show selectedShow) 
+	{
+		// TODO Auto-generated method stub
+		Log.e("abcdefgh", "ancdefgh inside Utility");
+		AlertDialog.Builder builder = new AlertDialog.Builder(context);
+		builder.setTitle("Select Option");
+		String[] options = { "Add favorite", "Add reminder" };
+
+		builder.setSingleChoiceItems(options, -1, new DialogInterface.OnClickListener() 
+		{
+			@Override
+			public void onClick(DialogInterface dialog, int which) 
+			{
+				// TODO Auto-generated method stub
+				switch (which) 
+				{
+					case 0: Utility.DBWrapper wrapper = new Utility.DBWrapper(context);
+							if (!alreadyFavorite(context, selectedShow.getpid())) 
+							{
+								long id = wrapper.addFavorite(selectedShow.getpid(), selectedShow.getpname(),selectedShow.getcname(),selectedShow.getpdate(),selectedShow.getpdetails(),selectedShow.getpstime(),selectedShow.getpetime());
+								if (id != -1) 
+								{
+									Toast.makeText(context,"Favorite added successfully",Toast.LENGTH_LONG).show();
+								}
+								else
+								Toast.makeText(context,"Error adding Favorite",Toast.LENGTH_LONG).show();
+							} 
+							else
+							Toast.makeText(context,"Already this show is added as favorite",Toast.LENGTH_LONG).show();
+							dialog.cancel();
+							break;
+					case 1: addReminder(context, selectedShow);
+							dialog.cancel();
+							break;
+				}
+			}
+		});
+		return builder.create();
+	}
+
+	public static void addReminder(Context context, Show selectedShow) 
+	{
+		String startT = selectedShow.getpdate() + " " + selectedShow.getpstime();
+		String endT = selectedShow.getpdate() + " " + selectedShow.getpetime();
+
+		SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm");
+		Date startD = Calendar.getInstance().getTime();
+		try 
+		{
+			startD = dateFormat.parse(startT);
+		} 
+		catch (ParseException e) 
+		{
+			// TODO Auto-generated catch block
+			Log.e("Utility", "start date exception " + e.getMessage());
+		}
+
+		Date endD = Calendar.getInstance().getTime();
+		
+		try 
+		{
+			endD = dateFormat.parse(endT);
+		} 
+		catch (ParseException e) 
+		{
+			// TODO Auto-generated catch block
+			Log.e("Utility", "end date exception " + e.getMessage());
+		}
+		Intent intent = new Intent(Intent.ACTION_EDIT);
+		intent.setType("vnd.android.cursor.item/event");
+
+		List list = context.getPackageManager().queryIntentActivities(intent, PackageManager.MATCH_DEFAULT_ONLY);
+		if (list.size() == 0)
+		{
+			Toast.makeText(context, "Calendar application not available", Toast.LENGTH_LONG).show();
+		} 
+		else 
+		{
+			intent.putExtra("beginTime", startD.getTime());
+			intent.putExtra("allDay", false);
+			intent.putExtra("hasAlarm", 1);
+			// intent.putExtra("rule", "FREQ=YEARLY");
+			intent.putExtra("endTime", endD.getTime());
+			intent.putExtra("title", selectedShow.getpname() + " on Channel " + selectedShow.getpdetails());
+			context.startActivity(intent);
+		}
+	}
+
+	private static boolean alreadyFavorite(Context context, String id) 
+	{
+		// TODO Auto-generated method stub
+		Utility.DBWrapper wrapper = new Utility.DBWrapper(context);
+		Cursor c = wrapper.getFavorite();
+		if (c.getCount() != 0) 
+		{
+			c.moveToFirst();
+			int showidClm = c.getColumnIndex(DBHelper.PROG_ID);
+			do 
+			{
+				String showid = c.getString(showidClm);
+				if (showid.equalsIgnoreCase(id)) 
+				{
+					return true;
+				} 
+			} while (c.moveToNext());
+		}
+		return false;
+	}
+
+	public static void setLanguage(String selection) 
+	{
+		// TODO Auto-generated method stub
+		language = selection;
+	}
+
+	public static String getLanguage() 
+	{
+		return language;
+	}
+}

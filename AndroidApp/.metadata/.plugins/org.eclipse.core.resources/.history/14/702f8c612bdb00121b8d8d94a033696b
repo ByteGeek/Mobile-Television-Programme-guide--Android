@@ -1,0 +1,142 @@
+package com.msk.epg;
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.Dialog;
+import android.content.Context;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.View.OnClickListener;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
+import android.widget.Toast;
+import android.widget.AdapterView.OnItemClickListener;
+
+@SuppressLint("NewApi")
+public class SearchActivity extends Activity implements OnClickListener, OnItemClickListener 
+{
+	private static final int DLG_SHOW_OPTIONS = 1;
+	private Button go_Button;
+	private EditText search_EditText;
+	
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		
+		setContentView(R.layout.search);
+		
+		go_Button = (Button) findViewById(R.id.button_go);
+		go_Button.setOnClickListener(this);
+		
+		search_EditText = (EditText) findViewById(R.id.input_search_query);
+	}
+
+	@Override
+	public void onClick(View arg0) {
+		// TODO Auto-generated method stub
+		String search = search_EditText.getText().toString();
+		
+		if(search.length()>0)
+		{
+		
+			ArrayList<String> programList = new ArrayList<String>();
+			
+			final ListView pl=(ListView)findViewById(R.id.searchResultL);
+			String[] progs = null;
+		
+		
+		
+		String result="";
+	    InputStream isr=null;
+	    try{
+	    	HttpClient httpclient=new DefaultHttpClient();
+	    	HttpPost httppost=new HttpPost("http://10.0.2.2/searchprog.php?search="+search);
+	    	HttpResponse response = httpclient.execute(httppost);
+	    	HttpEntity entity = response.getEntity();
+	    	isr=entity.getContent();
+	    }
+	    catch(Exception e){
+//	      	channels[0]= "coudnt connect";
+	    }
+	    
+	    try{
+	    	BufferedReader reader=new BufferedReader(new InputStreamReader(isr));
+	    	StringBuilder sb= new StringBuilder();
+	    	String line=null;
+	    	while((line=reader.readLine())!=null)
+	    	{
+	    		sb.append(line+"\n");
+	    	}
+	    	isr.close();
+	    	result=sb.toString();
+	    }
+	    catch(Exception e)
+	    {
+//	    	channels[0]="error in reading";
+	    }
+	   
+	    try{
+	    	String s="";
+	    	int j=0;
+	    	JSONArray jArray=new JSONArray(result);
+	    	progs=new String[jArray.length()+1];
+	    	
+	    	for(int ii=0;ii<jArray.length();ii++)
+	    	{
+	    		
+	    		JSONObject json= jArray.getJSONObject(ii);
+	    		s="Name:"+json.getString("pname")+"\nDetails:"+json.getString("pdetails")+"\nDate:"+json.getString("pdate")+"\nStart Time:"+json.getString("pstime")+"\nEnd Time:"+json.getString("petime")+"\n";
+	    		programList.add(s);
+	    		j++;
+	    	}
+	    
+	    	ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
+	                android.R.layout.simple_list_item_1, programList);
+	    	
+	    pl.setAdapter(adapter);
+	    
+	    
+	    }
+	    catch(Exception e)
+	    {
+	    //	channels[0]="error parsing";
+	    }
+		}
+		else
+		{
+			Toast.makeText(this, "Enter show name", Toast.LENGTH_LONG).show();
+		}
+	}
+
+	@Override
+	public void onItemClick(AdapterView<?> arg0, View arg1, int arg2, long arg3) {
+		// TODO Auto-generated method stub
+		
+	}
+
+}

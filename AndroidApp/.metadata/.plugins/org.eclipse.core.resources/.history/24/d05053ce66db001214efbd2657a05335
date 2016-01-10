@@ -1,0 +1,180 @@
+package com.msk.epg;
+
+
+
+
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+
+
+
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.ListActivity;
+import android.app.TabActivity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.TextureView;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TabHost;
+import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
+
+
+
+public class ProgramList extends Activity implements OnClickListener
+{
+	private Button back_button,main_button;
+	int progs_id[];
+	JSONArray jArray;
+	@Override
+	protected void onCreate(Bundle savedInstanceState) 
+	{
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.program_list);
+		Calendar ci = Calendar.getInstance();
+		ArrayList<String> programList = new ArrayList<String>();
+		
+		String time=ci.get(Calendar.HOUR_OF_DAY) + ":" + ci.get(Calendar.MINUTE)+ ":00";
+		String Date=ci.get(Calendar.YEAR) + "-" + (ci.get(Calendar.MONTH) + 1) + "-" +ci.get(Calendar.DAY_OF_MONTH);
+		final ListView pl=(ListView)findViewById(R.id.listView11);
+		back_button = (Button) findViewById(R.id.p_back_button);
+		main_button=(Button) findViewById(R.id.p_main_button);
+		
+		back_button.setOnClickListener(this);
+		main_button.setOnClickListener(this);
+		Bundle bundle = getIntent().getExtras();
+		String name=bundle.getString("msg");
+		
+		String result="";
+		InputStream isr=null;
+		try
+		{
+			HttpClient httpclient=new DefaultHttpClient();
+			HttpPost httppost=new HttpPost("http://10.0.2.2/programlistwithtime.php?prog="+name+"&date="+Date+"&time="+time);
+			HttpResponse response = httpclient.execute(httppost);
+			HttpEntity entity = response.getEntity();
+			isr=entity.getContent();
+		}
+		catch(Exception e)
+		{
+			Log.e("Exception in Program List 1", e.toString());
+		}
+    
+		try
+		{
+			BufferedReader reader=new BufferedReader(new InputStreamReader(isr));
+			StringBuilder sb= new StringBuilder();
+			String line=null;
+			while((line=reader.readLine())!=null)
+			{
+				sb.append(line+"\n");
+			}
+			isr.close();
+			result=sb.toString();
+		}
+		catch(Exception e)
+		{
+			Log.e("Exception in Program List 2", e.toString());
+		}
+		
+		try
+		{
+			String s="";
+			jArray=new JSONArray(result);
+			progs_id=new int [jArray.length()+1];
+			for(int ii=0;ii<jArray.length();ii++)
+			{
+				JSONObject json= jArray.getJSONObject(ii);
+				progs_id[ii]=Integer.parseInt(json.getString("pid"));
+				s="Name:"+json.getString("pname")+"\nDetails:"+json.getString("pdetails")+"\nDate:"+json.getString("pdate")+"\nStart Time:"+json.getString("pstime")+"\nEnd Time:"+json.getString("petime")+"\n";
+				programList.add(s);
+			}
+			ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1, programList);
+			pl.setAdapter(adapter);
+		}
+		catch(Exception e)
+		{
+			Log.e("Exception in Program List 3", e.toString());
+		}
+		
+		pl.setOnItemClickListener(new OnItemClickListener()
+		{
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,int position, long id) 
+			{
+				try
+				{
+					// getting values from selected ListItem
+					JSONObject json = jArray.getJSONObject(position);
+					int prog_selec=progs_id[position];
+					Intent myIntent1 = new Intent(ProgramList.this,FavoriteAdd.class);
+					myIntent1.putExtra("selected_prog", prog_selec);
+					myIntent1.putExtra("pname", json.getString("pname"));
+					myIntent1.putExtra("cname", json.getString("cname"));
+					myIntent1.putExtra("pdate", json.getString("pdate"));
+					myIntent1.putExtra("pdetails", json.getString("pdetails"));
+					myIntent1.putExtra("pstime", json.getString("pstime"));
+					myIntent1.putExtra("petime", json.getString("petime"));
+					myIntent1.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					Log.e(CONNECTIVITY_SERVICE, "inside programList class");
+					startActivity(myIntent1);
+				}
+				catch(Exception e)
+				{
+					Log.e("Exception in Program List 1", e.toString());
+				}
+			}
+		});
+	}
+
+	@Override
+	public void onClick(View v)
+	{
+		// TODO Auto-generated method stub
+		if(v==back_button)
+		{
+			finish();
+		}
+		if(v==main_button)
+		{
+			Intent intent= new Intent(this,HomeActivity.class);
+			intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+			startActivity(intent);
+		}
+	}
+}

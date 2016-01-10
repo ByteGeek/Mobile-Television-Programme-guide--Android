@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:id="@+id/linear" android:background="@drawable/home">
+
+<TextView  
+    android:layout_width="fill_parent" 
+    android:layout_height="wrap_content" android:text="Channel List" android:textSize="25dip" android:gravity="center_horizontal" android:textColor="#55f"/>
+<Spinner android:layout_height="wrap_content" android:id="@+id/languageS" android:layout_width="fill_parent"></Spinner>
+<ListView 
+      android:id="@+id/listText" 
+      android:layout_height="fill_parent"
+      android:layout_width="fill_parent" />
+
+</LinearLayout>

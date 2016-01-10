@@ -1,0 +1,114 @@
+package com.msk.epg;
+
+
+
+
+import java.io.BufferedReader;
+import java.io.DataInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
+
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import android.app.Dialog;
+
+
+
+
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.ListActivity;
+import android.app.PendingIntent;
+import android.app.TabActivity;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.database.sqlite.SQLiteDatabase;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.LayoutInflater;
+import android.view.TextureView;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.Spinner;
+import android.widget.TabHost;
+import android.widget.TextView;
+import android.widget.AdapterView.OnItemClickListener;
+import android.widget.AdapterView.OnItemSelectedListener;
+
+
+
+public class FavoriteAdd extends Activity implements OnClickListener
+{
+	private Button b_add,b_cancel;
+	int prog_id;
+	Calendar objCalendar = Calendar.getInstance();
+	private Show selectedShow;
+	String name;
+	@Override
+	protected void onCreate(Bundle savedInstanceState) 
+	{
+		Dialog dlg;
+		//Log.e(CONNECTIVITY_SERVICE, "inside FavoriteAdd class");
+		// TODO Auto-generated method stub
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.favadd);
+		b_add=(Button) findViewById(R.id.bFav_add);
+		b_cancel= (Button) findViewById(R.id.bFav_cancel);
+		Bundle bundle = getIntent().getExtras();
+		name=Integer.toString(bundle.getInt("selected_prog"));
+		Log.e("pid", name);
+		Log.e("pname", bundle.getString("pname"));
+		Log.e("pcname", bundle.getString("cname"));
+		Log.e("pdate", bundle.getString("pdate"));
+		Log.e(CONNECTIVITY_SERVICE, "inside FavoriteAdd class 1");
+		Log.e("pdetails", bundle.getString("pdetails"));
+		Log.e("pstime", bundle.getString("pstime"));
+		Log.e("petime", bundle.getString("petime"));
+		Log.e(CONNECTIVITY_SERVICE, "inside FavoriteAdd class 2");
+		selectedShow = new Show(name,bundle.getString("pname"),bundle.getString("cname"),bundle.getString("pdate"),bundle.getString("pdetails"),bundle.getString("pstime"),bundle.getString("petime"));
+		b_add.setOnClickListener(this);
+		b_cancel.setOnClickListener(this);
+	}
+	
+	public void onClick(View arg0)
+	{
+		if(arg0==b_add)
+		{
+			Log.e(CONNECTIVITY_SERVICE, "inside Favorite Add");
+			text.setText(name);
+			Dialog dlg = Utility.createShowDialog(this, selectedShow);
+			dlg.show();
+		}
+		
+		if(arg0==b_cancel)
+		{
+			finish();
+		}
+	}
+}
